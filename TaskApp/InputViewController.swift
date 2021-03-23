@@ -12,6 +12,7 @@ import UserNotifications
 class InputViewController: UIViewController {
 
     @IBOutlet weak var titleTextField: UITextField!
+    @IBOutlet weak var categoryTextField: UITextField!
     @IBOutlet weak var contentsTextView: UITextView!
     @IBOutlet weak var datePicker: UIDatePicker!
     
@@ -33,6 +34,7 @@ class InputViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         try! realm.write {
             task.title = titleTextField.text!
+            task.category = categoryTextField.text!
             task.contents = contentsTextView.text ?? ""
             task.date = datePicker.date
             realm.add(task, update: .modified)

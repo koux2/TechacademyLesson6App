@@ -8,19 +8,24 @@
 import UIKit
 import RealmSwift
 
-class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var searchField: UISearchBar!
     
     let realm = try! Realm()
     
     var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: true)
+    var filterTaskArray = [Task]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         tableView.delegate = self
         tableView.dataSource = self
+        searchField.delegate = self
+        
+        filterTaskArray = Array(taskArray)
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -28,7 +33,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         if segue.identifier == "cellSegue" {
             let indexPath = tableView.indexPathForSelectedRow
-            inputViewController.task = taskArray[indexPath!.row]
+            inputViewController.task = filterTaskArray[indexPath!.row]
         } else {
             let task = Task()
             
@@ -47,13 +52,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return taskArray.count
+        return filterTaskArray.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         
-        let task = taskArray[indexPath.row]
+        let task = filterTaskArray[indexPath.row]
         cell.textLabel?.text = task.title
         
         let formatter = DateFormatter()
@@ -77,7 +82,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 
         if editingStyle == .delete {
             
-            let task = taskArray[indexPath.row]
+            let task = filterTaskArray[indexPath.row]
             
             let center = UNUserNotificationCenter.current()
             center.removePendingNotificationRequests(withIdentifiers: [String(task.id)])
@@ -95,6 +100,28 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 }
             }
         }
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        view.endEditing(true)
+        let word = searchBar.text
+        filterTaskArray.removeAll()
+        if word == "" {
+            filterTaskArray = Array(taskArray)
+        } else {
+            for task in taskArray {
+                if task.category == word {
+                    filterTaskArray.append(task)
+                }
+            }
+        }
+        
+        tableView.reloadData()
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        filterTaskArray = Array(taskArray)
+        tableView.reloadData()
     }
 }
 
